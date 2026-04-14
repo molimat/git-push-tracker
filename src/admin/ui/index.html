@@ -5,130 +5,902 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Git Push Tracker - AI-Powered Push Summaries</title>
   <meta name="description" content="Self-hosted service that turns your git pushes into AI-generated team updates. Connects to GitHub/GitLab via webhooks, summarizes changes with Google Gemini.">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-
-  <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Git Push Tracker">
   <meta property="og:description" content="AI-powered push summaries for your team. Self-hosted, per-project isolation, GitHub + GitLab support.">
   <meta property="og:image" content="/assets/og-image.svg">
-
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Git Push Tracker">
   <meta name="twitter:description" content="AI-powered push summaries for your team. Self-hosted, per-project isolation, GitHub + GitLab support.">
   <meta name="twitter:image" content="/assets/og-image.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-deep: #080c14;
+      --bg-base: #0c1220;
+      --bg-surface: #131c2e;
+      --bg-elevated: #1a2540;
+      --border: #1e2d4a;
+      --border-hover: #2a3f66;
+      --text-primary: #e8edf5;
+      --text-secondary: #7b8ba8;
+      --text-muted: #4a5a78;
+      --accent: #e6392b;
+      --accent-hover: #ff4d3d;
+      --accent-glow: rgba(230, 57, 43, 0.15);
+      --blue: #3b82f6;
+      --blue-hover: #5b9aff;
+      --green: #10b981;
+      --green-dim: rgba(16, 185, 129, 0.1);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.1);
+      --orange: #f59e0b;
+      --font-body: 'DM Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; padding: 2rem; }
-    h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #f8fafc; }
-    h2 { font-size: 1.1rem; margin-bottom: 0.75rem; color: #94a3b8; }
 
-    .container { max-width: 900px; margin: 0 auto; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-    .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-    .card-header h3 { font-size: 1rem; color: #f1f5f9; }
+    /* ============================================
+       LOGIN SCREEN
+       ============================================ */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      position: relative;
+    }
 
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-    .badge-github { background: #21262d; color: #f0f6fc; }
-    .badge-gitlab { background: #292961; color: #fc6d26; }
+    .login-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
 
-    .stats { display: flex; gap: 1rem; font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem; }
-    .stats span { background: #0f172a; padding: 2px 8px; border-radius: 4px; }
+    .login-bg::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      left: -20%;
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(ellipse, rgba(230, 57, 43, 0.08) 0%, transparent 70%);
+      animation: drift 20s ease-in-out infinite;
+    }
 
-    .webhook-url { font-family: monospace; font-size: 0.8rem; color: #38bdf8; background: #0f172a; padding: 4px 8px; border-radius: 4px; word-break: break-all; display: block; margin-bottom: 0.75rem; }
+    .login-bg::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      right: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(ellipse, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
+      animation: drift 25s ease-in-out infinite reverse;
+    }
 
-    .keys-section { margin-top: 0.5rem; }
-    .key-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #0f172a; border-radius: 4px; margin-bottom: 4px; font-size: 0.8rem; }
-    .key-item.revoked { opacity: 0.4; }
+    @keyframes drift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(30px, -20px) rotate(1deg); }
+      66% { transform: translate(-20px, 15px) rotate(-1deg); }
+    }
 
-    button { cursor: pointer; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.8rem; font-weight: 500; transition: background 0.15s; }
-    .btn-primary { background: #3b82f6; color: white; }
-    .btn-primary:hover { background: #2563eb; }
-    .btn-danger { background: #ef4444; color: white; }
-    .btn-danger:hover { background: #dc2626; }
-    .btn-sm { padding: 3px 8px; font-size: 0.75rem; }
+    .login-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(30, 45, 74, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 45, 74, 0.15) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 20%, transparent 100%);
+    }
 
-    .form-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-    .form-row input, .form-row select { flex: 1; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; }
-    .form-row input:focus, .form-row select:focus { outline: none; border-color: #3b82f6; }
+    .login-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 400px;
+      padding: 0 1.5rem;
+    }
 
-    .alert { padding: 10px 14px; border-radius: 6px; margin-bottom: 1rem; font-size: 0.85rem; font-family: monospace; word-break: break-all; }
-    .alert-success { background: #064e3b; border: 1px solid #059669; color: #6ee7b7; }
-    .alert-error { background: #450a0a; border: 1px solid #dc2626; color: #fca5a5; }
+    .login-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 2.5rem;
+    }
 
-    .empty { text-align: center; color: #475569; padding: 2rem; font-size: 0.9rem; }
+    .login-logo img {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      margin-bottom: 1.25rem;
+      filter: drop-shadow(0 0 30px rgba(230, 57, 43, 0.3));
+    }
 
-    #key-alert { display: none; }
+    .login-logo h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    .login-logo p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 0.4rem;
+      font-weight: 400;
+    }
+
+    .login-form {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      backdrop-filter: blur(20px);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.02) inset,
+        0 20px 60px -10px rgba(0,0,0,0.5);
+    }
+
+    .login-field {
+      margin-bottom: 1.25rem;
+    }
+
+    .login-field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .login-field input {
+      width: 100%;
+      background: var(--bg-deep);
+      border: 1.5px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.8rem 1rem;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .login-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .login-field input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 0.85rem;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: white;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.2s;
+      margin-top: 0.25rem;
+    }
+
+    .login-btn:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 20px rgba(230, 57, 43, 0.3);
+    }
+
+    .login-btn:active {
+      transform: scale(0.985);
+    }
+
+    .login-error {
+      display: none;
+      background: var(--red-dim);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+      padding: 0.65rem 0.9rem;
+      border-radius: var(--radius);
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 1.75rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .login-footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .login-footer a:hover { color: var(--text-primary); }
+
+    /* ============================================
+       DASHBOARD
+       ============================================ */
+    #dashboard {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .dash-header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(12, 18, 32, 0.85);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .dash-header-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0.9rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dash-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .dash-brand img {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+    }
+
+    .dash-brand span {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .dash-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.4rem 0.9rem;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dash-logout:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
+    .dash-body {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* --- Alert banner (dismissible) --- */
+    .alert-banner {
+      display: none;
+      position: relative;
+      background: var(--bg-surface);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-left: 3px solid var(--green);
+      border-radius: var(--radius);
+      padding: 1rem 2.5rem 1rem 1rem;
+      margin-bottom: 1.5rem;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert-banner .alert-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--green);
+      margin-bottom: 0.35rem;
+    }
+
+    .alert-banner .alert-value {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-primary);
+      word-break: break-all;
+      line-height: 1.5;
+      user-select: all;
+    }
+
+    .alert-banner .alert-hint {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+    }
+
+    .alert-close {
+      position: absolute;
+      top: 0.65rem;
+      right: 0.65rem;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      transition: all 0.15s;
+    }
+
+    .alert-close:hover {
+      background: var(--red-dim);
+      border-color: rgba(239, 68, 68, 0.2);
+      color: var(--red);
+    }
+
+    /* --- Section titles --- */
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    /* --- Add project form --- */
+    .add-form {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .add-form input,
+    .add-form select {
+      flex: 1;
+      min-width: 140px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .add-form input:focus,
+    .add-form select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    }
+
+    .add-form input::placeholder { color: var(--text-muted); }
+
+    .add-form select {
+      flex: 0 0 130px;
+      cursor: pointer;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%234a5a78' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+
+    .add-form select option { background: var(--bg-base); }
+
+    .btn {
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.82rem;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn-add {
+      padding: 0.65rem 1.2rem;
+      background: var(--blue);
+      color: white;
+    }
+
+    .btn-add:hover {
+      background: var(--blue-hover);
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-key {
+      padding: 0.35rem 0.7rem;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      color: var(--blue);
+      font-size: 0.75rem;
+    }
+
+    .btn-key:hover {
+      background: rgba(59, 130, 246, 0.18);
+    }
+
+    .btn-delete {
+      padding: 0.35rem 0.7rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .btn-delete:hover {
+      background: var(--red-dim);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: var(--red);
+    }
+
+    .btn-revoke {
+      padding: 0.3rem 0.55rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+    }
+
+    .btn-revoke:hover {
+      background: var(--red-dim);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: var(--red);
+    }
+
+    /* --- Project cards --- */
+    .projects-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .project-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      transition: border-color 0.2s;
+    }
+
+    .project-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .project-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+    }
+
+    .project-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .provider-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 5px;
+    }
+
+    .provider-badge.github {
+      background: rgba(255, 255, 255, 0.06);
+      color: #c9d1d9;
+    }
+
+    .provider-badge.gitlab {
+      background: rgba(252, 109, 38, 0.1);
+      color: #fc6d26;
+    }
+
+    .project-actions {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .webhook-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .webhook-url {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      background: var(--bg-deep);
+      padding: 0.45rem 0.7rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      word-break: break-all;
+      user-select: all;
+    }
+
+    .btn-copy {
+      padding: 0.4rem 0.55rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .btn-copy:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .stat {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .stat-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .stat-dot.pending { background: var(--orange); }
+    .stat-dot.done { background: var(--green); }
+
+    .keys-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .key-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.4rem 0.6rem;
+      background: var(--bg-deep);
+      border-radius: 6px;
+      font-size: 0.78rem;
+    }
+
+    .key-row.revoked {
+      opacity: 0.35;
+    }
+
+    .key-label {
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .key-label .key-icon {
+      font-size: 0.7rem;
+      opacity: 0.5;
+    }
+
+    .key-date {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+    }
+
+    .revoked-tag {
+      font-size: 0.65rem;
+      color: var(--red);
+      opacity: 0.8;
+    }
+
+    .no-keys {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      padding: 0.3rem 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.3;
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+    }
+
+    /* --- Fade in animation --- */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up {
+      animation: fadeUp 0.4s ease-out backwards;
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 640px) {
+      .dash-body { padding: 1.25rem; }
+      .add-form { flex-direction: column; }
+      .add-form select { flex: 1; }
+      .project-top { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .project-actions { align-self: flex-end; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 style="display:flex;align-items:center;gap:0.75rem"><img src="/assets/logo.svg" alt="Git Push Tracker" width="36" height="36" style="border-radius:8px"> Git Push Tracker</h1>
 
-    <h2>Add Project</h2>
-    <div class="form-row">
-      <input type="text" id="project-name" placeholder="Project name">
-      <select id="project-provider">
-        <option value="github">GitHub</option>
-        <option value="gitlab">GitLab</option>
-      </select>
-      <input type="text" id="project-url" placeholder="Repository URL">
-      <button class="btn-primary" onclick="createProject()">Add</button>
+  <!-- ========== LOGIN ========== -->
+  <div id="login-screen">
+    <div class="login-bg">
+      <div class="login-grid"></div>
     </div>
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="/assets/logo.svg" alt="Git Push Tracker">
+        <h1>Git Push Tracker</h1>
+        <p>AI-powered push summaries</p>
+      </div>
+      <form class="login-form" id="login-form" autocomplete="on">
+        <div id="login-error" class="login-error">Invalid credentials</div>
+        <div class="login-field">
+          <label for="login-user">Username</label>
+          <input type="text" id="login-user" name="username" placeholder="admin" autocomplete="username" required>
+        </div>
+        <div class="login-field">
+          <label for="login-pass">Password</label>
+          <input type="password" id="login-pass" name="password" placeholder="Enter password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="login-btn">Sign In</button>
+      </form>
+      <div class="login-footer">
+        <a href="https://github.com/molimat/git-push-tracker" target="_blank">github.com/molimat/git-push-tracker</a>
+      </div>
+    </div>
+  </div>
 
-    <div id="key-alert" class="alert alert-success"></div>
+  <!-- ========== DASHBOARD ========== -->
+  <div id="dashboard">
+    <header class="dash-header">
+      <div class="dash-header-inner">
+        <div class="dash-brand">
+          <img src="/assets/logo.svg" alt="">
+          <span>Git Push Tracker</span>
+        </div>
+        <button class="dash-logout" onclick="logout()">Sign Out</button>
+      </div>
+    </header>
 
-    <h2>Projects</h2>
-    <div id="projects-list"><div class="empty">Loading...</div></div>
+    <main class="dash-body">
+      <!-- Alert banner (stays until dismissed) -->
+      <div id="alert-banner" class="alert-banner">
+        <button class="alert-close" onclick="dismissAlert()" title="Dismiss">&times;</button>
+        <div class="alert-label" id="alert-label">Secret</div>
+        <div class="alert-value" id="alert-value"></div>
+        <div class="alert-hint" id="alert-hint">Click to select, then copy. This won't be shown again.</div>
+      </div>
+
+      <div class="section-title">New Project</div>
+      <div class="add-form">
+        <input type="text" id="project-name" placeholder="Project name">
+        <select id="project-provider">
+          <option value="github">GitHub</option>
+          <option value="gitlab">GitLab</option>
+        </select>
+        <input type="text" id="project-url" placeholder="https://github.com/org/repo">
+        <button class="btn btn-add" onclick="createProject()">+ Add Project</button>
+      </div>
+
+      <div class="section-title">Projects</div>
+      <div id="projects-list" class="projects-grid">
+        <div class="empty-state">
+          <div class="empty-icon">&#9675;</div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    </main>
   </div>
 
   <script>
+    let authHeader = '';
     const baseUrl = window.location.origin;
 
+    // ---- Auth ----
+    const savedAuth = sessionStorage.getItem('gpt_auth');
+    if (savedAuth) {
+      authHeader = savedAuth;
+      showDashboard();
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = document.getElementById('login-user').value;
+      const pass = document.getElementById('login-pass').value;
+      const encoded = btoa(`${user}:${pass}`);
+      const header = `Basic ${encoded}`;
+
+      try {
+        const res = await fetch('/admin/api/projects', {
+          headers: { 'Authorization': header, 'Content-Type': 'application/json' }
+        });
+        if (res.ok) {
+          authHeader = header;
+          sessionStorage.setItem('gpt_auth', header);
+          showDashboard();
+        } else {
+          document.getElementById('login-error').style.display = 'block';
+        }
+      } catch {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    });
+
+    function logout() {
+      sessionStorage.removeItem('gpt_auth');
+      authHeader = '';
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('login-user').value = '';
+      document.getElementById('login-pass').value = '';
+      document.getElementById('login-error').style.display = 'none';
+    }
+
+    function showDashboard() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadProjects();
+    }
+
+    // ---- API helper ----
     async function api(path, opts = {}) {
       const res = await fetch(`/admin${path}`, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
+        },
         ...opts,
       });
+      if (res.status === 401) { logout(); return null; }
       if (res.status === 204) return null;
       return res.json();
     }
 
+    // ---- Alert banner (stays until X is clicked) ----
+    function showAlert(label, value, hint) {
+      const el = document.getElementById('alert-banner');
+      document.getElementById('alert-label').textContent = label;
+      document.getElementById('alert-value').textContent = value;
+      document.getElementById('alert-hint').textContent = hint || '';
+      el.style.display = 'block';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function dismissAlert() {
+      document.getElementById('alert-banner').style.display = 'none';
+    }
+
+    // ---- Projects ----
     async function loadProjects() {
       const projects = await api('/api/projects');
+      if (!projects) return;
       const el = document.getElementById('projects-list');
 
       if (!projects.length) {
-        el.innerHTML = '<div class="empty">No projects yet. Add one above.</div>';
+        el.innerHTML = `
+          <div class="empty-state fade-up">
+            <div class="empty-icon">&#9678;</div>
+            <p>No projects yet. Add one above to get started.</p>
+          </div>`;
         return;
       }
 
-      el.innerHTML = projects.map(p => `
-        <div class="card">
-          <div class="card-header">
-            <h3>${esc(p.name)} <span class="badge badge-${p.provider}">${p.provider}</span></h3>
-            <button class="btn-danger btn-sm" onclick="deleteProject('${p.id}')">Delete</button>
-          </div>
-          <span class="webhook-url">${baseUrl}/webhooks/${p.provider}/${p.id}</span>
-          <div class="stats">
-            <span>Pending: ${p.stats.pending}</span>
-            <span>Processed: ${p.stats.processed}</span>
-          </div>
-          <div class="keys-section">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <strong style="font-size:0.8rem;color:#94a3b8">API Keys</strong>
-              <button class="btn-primary btn-sm" onclick="generateKey('${p.id}')">+ Key</button>
+      el.innerHTML = projects.map((p, i) => `
+        <div class="project-card fade-up" style="animation-delay:${i * 60}ms">
+          <div class="project-top">
+            <div class="project-name">
+              ${esc(p.name)}
+              <span class="provider-badge ${p.provider}">${p.provider}</span>
             </div>
+            <div class="project-actions">
+              <button class="btn btn-key" onclick="generateKey('${p.id}')">+ Key</button>
+              <button class="btn btn-delete" onclick="deleteProject('${p.id}')">Delete</button>
+            </div>
+          </div>
+
+          <div class="webhook-row">
+            <span class="webhook-url">${baseUrl}/webhooks/${p.provider}/${p.id}</span>
+            <button class="btn-copy" onclick="copyText('${baseUrl}/webhooks/${p.provider}/${p.id}', this)" title="Copy URL">&#x2398;</button>
+          </div>
+
+          <div class="stats-row">
+            <span class="stat"><span class="stat-dot pending"></span> ${p.stats.pending} pending</span>
+            <span class="stat"><span class="stat-dot done"></span> ${p.stats.processed} processed</span>
+          </div>
+
+          <div class="keys-list">
             ${p.keys.length ? p.keys.map(k => `
-              <div class="key-item ${k.revoked ? 'revoked' : ''}">
-                <span>${esc(k.label || 'no label')} &mdash; ${new Date(k.createdAt).toLocaleDateString()}</span>
-                ${k.revoked ? '<span style="color:#ef4444">revoked</span>' : `<button class="btn-danger btn-sm" onclick="revokeKey('${p.id}','${k.id}')">Revoke</button>`}
+              <div class="key-row ${k.revoked ? 'revoked' : ''}">
+                <span class="key-label">
+                  <span class="key-icon">&#9919;</span>
+                  ${esc(k.label || 'Unnamed key')}
+                  <span class="key-date">&middot; ${new Date(k.createdAt).toLocaleDateString()}</span>
+                </span>
+                ${k.revoked
+                  ? '<span class="revoked-tag">revoked</span>'
+                  : `<button class="btn btn-revoke" onclick="revokeKey('${p.id}','${k.id}')">Revoke</button>`}
               </div>
-            `).join('') : '<div style="font-size:0.8rem;color:#475569">No keys yet</div>'}
+            `).join('') : '<div class="no-keys">No API keys yet</div>'}
           </div>
         </div>
       `).join('');
@@ -138,14 +910,19 @@
       const name = document.getElementById('project-name').value.trim();
       const provider = document.getElementById('project-provider').value;
       const repoUrl = document.getElementById('project-url').value.trim();
-      if (!name || !repoUrl) return alert('Name and URL required');
+      if (!name || !repoUrl) return;
 
       const result = await api('/api/projects', {
         method: 'POST',
         body: JSON.stringify({ name, provider, repoUrl }),
       });
+      if (!result) return;
 
-      showAlert(`Project created! Webhook secret: ${result.webhookSecret}`);
+      showAlert(
+        'Webhook Secret Created',
+        result.webhookSecret,
+        'Copy this secret and paste it in your repository webhook settings. Dismiss when done.'
+      );
       document.getElementById('project-name').value = '';
       document.getElementById('project-url').value = '';
       loadProjects();
@@ -154,6 +931,7 @@
     async function deleteProject(id) {
       if (!confirm('Delete this project and all its data?')) return;
       await api(`/api/projects/${id}`, { method: 'DELETE' });
+      dismissAlert();
       loadProjects();
     }
 
@@ -163,21 +941,33 @@
         method: 'POST',
         body: JSON.stringify({ label }),
       });
-      showAlert(`API Key (save now, shown once): ${result.key}`);
+      if (!result) return;
+
+      showAlert(
+        'API Key Generated',
+        result.key,
+        'Save this key now — it will never be shown again. Dismiss when copied.'
+      );
       loadProjects();
     }
 
     async function revokeKey(projectId, keyId) {
-      if (!confirm('Revoke this key?')) return;
+      if (!confirm('Revoke this key? Consumers using it will lose access.')) return;
       await api(`/api/projects/${projectId}/keys/${keyId}`, { method: 'DELETE' });
       loadProjects();
     }
 
-    function showAlert(msg) {
-      const el = document.getElementById('key-alert');
-      el.textContent = msg;
-      el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, 30000);
+    function copyText(text, btn) {
+      navigator.clipboard.writeText(text);
+      const original = btn.innerHTML;
+      btn.innerHTML = '&#10003;';
+      btn.style.color = 'var(--green)';
+      btn.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      setTimeout(() => {
+        btn.innerHTML = original;
+        btn.style.color = '';
+        btn.style.borderColor = '';
+      }, 1500);
     }
 
     function esc(s) {
@@ -185,8 +975,6 @@
       d.textContent = s;
       return d.innerHTML;
     }
-
-    loadProjects();
   </script>
 </body>
 </html>

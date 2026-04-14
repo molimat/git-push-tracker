@@ -5,7 +5,7 @@ export function createBasicAuth(adminUser: string, adminPass: string) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Basic ")) {
-      res.setHeader("WWW-Authenticate", 'Basic realm="git-push-tracker admin"');
+      // No WWW-Authenticate header — avoids browser popup, login is handled by frontend
       res.status(401).json({ error: "authentication required" });
       return;
     }
@@ -14,7 +14,7 @@ export function createBasicAuth(adminUser: string, adminPass: string) {
     const [user, pass] = decoded.split(":");
 
     if (user !== adminUser || pass !== adminPass) {
-      res.setHeader("WWW-Authenticate", 'Basic realm="git-push-tracker admin"');
+      // No WWW-Authenticate header — avoids browser popup, login is handled by frontend
       res.status(401).json({ error: "invalid credentials" });
       return;
     }

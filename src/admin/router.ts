@@ -17,12 +17,13 @@ export function createAdminRouter(
   const router = Router();
   const auth = createBasicAuth(adminUser, adminPass);
 
-  router.use(auth);
-
-  // Serve admin UI
+  // Serve admin UI (public — login is handled client-side)
   router.get("/", (_req: Request, res: Response) => {
     res.sendFile(join(__dirname, "ui", "index.html"));
   });
+
+  // Protect all API routes
+  router.use("/api", auth);
 
   // List projects
   router.get("/api/projects", (_req: Request, res: Response) => {
