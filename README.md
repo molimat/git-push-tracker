@@ -49,7 +49,7 @@ npm run dev
 | `DATABASE_PATH` | No | `./data/pushlog.db` | SQLite file path |
 | `WORKER_INTERVAL_MS` | No | `10000` | Worker poll interval (ms) |
 | `MAX_RETRY_ATTEMPTS` | No | `3` | Max Gemini retry attempts |
-| `GEMINI_MODEL` | No | `gemini-2.5-flash` | Gemini model to use |
+| `GEMINI_MODEL` | No | `gemini-2.5-flash-lite` | Gemini model to use |
 
 ## Usage
 
