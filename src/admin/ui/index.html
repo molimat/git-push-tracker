@@ -993,14 +993,10 @@
 
       <div class="section-title">New Project</div>
       <div class="add-form">
-        <input type="text" id="project-name" placeholder="Project name">
-        <select id="project-provider">
-          <option value="github">GitHub</option>
-          <option value="gitlab">GitLab</option>
-        </select>
-        <input type="text" id="project-url" placeholder="https://github.com/org/repo">
+        <input type="text" id="project-url" placeholder="https://github.com/org/repo or https://gitlab.com/org/project" style="flex:3">
         <button class="btn btn-add" onclick="createProject()">+ Add Project</button>
       </div>
+      <div id="url-preview" style="display:none;font-size:0.78rem;color:var(--text-secondary);margin:-1rem 0 1.5rem 0;padding-left:2px"></div>
 
       <div class="section-title">Projects</div>
       <div id="projects-list" class="projects-grid">
@@ -1312,15 +1308,57 @@ res = requests.get(
       `).join('');
     }
 
+    function parseRepoUrl(url) {
+      url = url.trim().replace(/\/+$/, '').replace(/\.git$/, '');
+      try {
+        const u = new URL(url);
+        const host = u.hostname.toLowerCase();
+        const parts = u.pathname.replace(/^\//, '').split('/').filter(Boolean);
+        if (parts.length < 2) return null;
+
+        let provider = null;
+        if (host.includes('github')) provider = 'github';
+        else if (host.includes('gitlab')) provider = 'gitlab';
+        else return null;
+
+        // Use last two path segments as org/repo (handles subgroups)
+        const name = parts[parts.length - 1];
+        return { provider, name, repoUrl: url };
+      } catch {
+        return null;
+      }
+    }
+
+    // Live preview as user types
+    document.getElementById('project-url').addEventListener('input', (e) => {
+      const preview = document.getElementById('url-preview');
+      const parsed = parseRepoUrl(e.target.value);
+      if (parsed) {
+        const badge = parsed.provider === 'github'
+          ? '<span style="color:#c9d1d9">GitHub</span>'
+          : '<span style="color:#fc6d26">GitLab</span>';
+        preview.innerHTML = `Detected: ${badge} &rarr; <strong style="color:var(--text-primary)">${esc(parsed.name)}</strong>`;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
+    });
+
     async function createProject() {
-      const name = document.getElementById('project-name').value.trim();
-      const provider = document.getElementById('project-provider').value;
-      const repoUrl = document.getElementById('project-url').value.trim();
-      if (!name || !repoUrl) return;
+      const rawUrl = document.getElementById('project-url').value;
+      const parsed = parseRepoUrl(rawUrl);
+
+      if (!parsed) {
+        showAlert('Error', 'Could not detect provider. Use a GitHub or GitLab URL like https://github.com/org/repo', '');
+        document.getElementById('alert-banner').style.borderLeftColor = 'var(--red)';
+        document.getElementById('alert-banner').style.borderColor = 'rgba(239,68,68,0.25)';
+        document.getElementById('alert-label').style.color = 'var(--red)';
+        return;
+      }
 
       const result = await api('/api/projects', {
         method: 'POST',
-        body: JSON.stringify({ name, provider, repoUrl }),
+        body: JSON.stringify({ name: parsed.name, provider: parsed.provider, repoUrl: parsed.repoUrl }),
       });
       if (!result) return;
 
@@ -1329,8 +1367,8 @@ res = requests.get(
         result.webhookSecret,
         'Copy this secret and paste it in your repository webhook settings. Dismiss when done.'
       );
-      document.getElementById('project-name').value = '';
       document.getElementById('project-url').value = '';
+      document.getElementById('url-preview').style.display = 'none';
       loadProjects();
     }
 
