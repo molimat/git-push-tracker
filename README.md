@@ -13,7 +13,7 @@ You work across multiple projects and teams. You push code, deploy, move on — 
 Git Push Tracker listens to every push across all your repos and generates human-readable bullet point summaries automatically. Each team gets their own API endpoint with an isolated bearer token — team A never sees team B's activity.
 
 ```
-Push to GitHub → Webhook → AI Summary → Team reads via API
+Push to GitHub/GitLab → Webhook → AI Summary → Team reads via API
 ```
 
 ## Features
@@ -23,8 +23,11 @@ Push to GitHub → Webhook → AI Summary → Team reads via API
 - **Team Isolation** — Per-project bearer tokens ensure complete data separation
 - **Zero External Dependencies** — SQLite database, no Redis/Postgres required
 - **Async Processing** — Webhooks respond instantly (202), AI processing happens in background
-- **Admin Dashboard** — Web UI to manage projects, API keys, and monitor webhook status
-- **Docker Ready** — Single image, one volume, deploy anywhere
+- **Admin Dashboard** — Login screen, project management, API key management with copy buttons, push logs, inline API docs
+- **Smart URL Detection** — Paste a GitHub/GitLab URL and the provider + project name are auto-detected
+- **Built-in API Docs** — Slide-out docs panel with code examples in curl, JavaScript, and Python, copyable as text or markdown
+- **Per-Project "How to Connect"** — Each project card has a modal with its specific endpoint and code examples
+- **Docker Ready** — Single image, named volume for persistence, deploy anywhere
 - **Self-Hosted** — Your code stays on your infrastructure
 
 ## Quick Start
@@ -69,20 +72,28 @@ The admin dashboard will be available at `http://localhost:3000/admin`.
 
 ### 1. Create a project
 
-Open the admin dashboard and add a project with its name, provider (GitHub/GitLab), and repository URL. You'll receive a **webhook URL** and **webhook secret**.
+Open the admin dashboard and paste a GitHub or GitLab repository URL. The provider and project name are auto-detected.
+
+You'll receive a **webhook URL** and **webhook secret**.
 
 ### 2. Configure the webhook
 
-In your repository settings (GitHub or GitLab), add a webhook:
+In your repository settings:
 
-- **URL**: The webhook URL from step 1 (e.g. `https://your-domain.com/webhooks/github/<project-id>`)
-- **Secret**: The webhook secret from step 1
+**GitHub**: Settings → Webhooks → Add webhook
+- **Payload URL**: The webhook URL from step 1
 - **Content type**: `application/json`
-- **Events**: Push events only
+- **Secret**: The webhook secret from step 1
+- **Events**: Just the push event
+
+**GitLab**: Settings → Webhooks → Add new webhook
+- **URL**: The webhook URL from step 1
+- **Secret token**: The webhook secret from step 1
+- **Trigger**: Push events
 
 ### 3. Generate an API key
 
-In the admin dashboard, click **+ Key** on your project. Save the generated key — it's only shown once.
+Click **+ Key** on your project card. API keys are always visible and copyable from the dashboard — no one-time-only restriction.
 
 ### 4. Consume the API
 
@@ -90,6 +101,8 @@ In the admin dashboard, click **+ Key** on your project. Save the generated key 
 curl -H "Authorization: Bearer YOUR_API_KEY" \
   https://your-domain.com/api/v1/pushes
 ```
+
+Each API key is scoped to a single project. A key from project A will never return data from project B.
 
 ### Query Parameters
 
@@ -157,7 +170,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
 
 ```
 src/
-├── index.ts              # Express app entry point
+├── index.ts              # Express app entry point, / → /admin redirect, /assets static
 ├── config.ts             # Environment variable parsing
 ├── db/
 │   ├── schema.ts         # Drizzle ORM table definitions
@@ -167,12 +180,14 @@ src/
 │   ├── github.ts         # GitHub payload parser + HMAC validation
 │   └── gitlab.ts         # GitLab payload parser + token validation
 ├── api/
-│   ├── router.ts         # GET /api/v1/pushes with pagination
+│   ├── router.ts         # GET /api/v1/pushes with pagination + filters
 │   └── auth.ts           # Bearer token middleware
 ├── admin/
-│   ├── router.ts         # CRUD projects + API keys
+│   ├── router.ts         # CRUD projects + API keys + logs endpoint
 │   ├── auth.ts           # Basic auth middleware
-│   └── ui/index.html     # Admin dashboard (vanilla HTML/CSS/JS)
+│   └── ui/
+│       ├── index.html    # Full admin SPA (login, dashboard, docs, modals)
+│       └── assets/       # logo.svg, favicon.svg, og-image.svg
 ├── worker/
 │   └── index.ts          # Background processor (pending → Gemini → done)
 └── gemini/
@@ -188,35 +203,31 @@ src/
 | Database | SQLite via better-sqlite3 |
 | ORM | Drizzle ORM |
 | AI | Google Gemini 2.5 Flash Lite |
-| Admin UI | Vanilla HTML/CSS/JS |
+| Admin UI | Vanilla HTML/CSS/JS (DM Sans + JetBrains Mono) |
 | Container | Docker (multi-stage build) |
 
 ## Security
 
 - **Webhook validation** — HMAC-SHA256 for GitHub, secret token header for GitLab
-- **API key storage** — SHA-256 hashed, raw key shown only once at creation
+- **API key storage** — Raw key stored for admin access, SHA-256 hash used for bearer auth lookup
 - **Project isolation** — Each bearer token maps to exactly one project
-- **Admin protection** — Basic auth via environment variables
+- **Admin protection** — Basic auth via environment variables, frontend login screen (no browser popup)
 
 ## Deploy with Coolify
 
+> **Important**: Use the **Docker Compose** build pack, not Dockerfile. The Docker Compose build pack respects the named volume in `docker-compose.yml`, ensuring your SQLite database persists between deploys.
+
 1. Create a new project in Coolify
 2. Add a new application → Public Repository → `https://github.com/molimat/git-push-tracker`
-3. Set build pack to **Dockerfile**
-4. Add environment variables (`GEMINI_API_KEY`, `ADMIN_USER`, `ADMIN_PASS`)
-5. Deploy
+3. Set build pack to **Docker Compose**
+4. Set Docker Compose location to `/docker-compose.yml`
+5. Add environment variables (`GEMINI_API_KEY`, `ADMIN_USER`, `ADMIN_PASS`)
+6. Configure domain in the compose service settings
+7. Deploy
 
 ## Built With AI
 
-This entire project — architecture design, code implementation, Docker setup, and Coolify deployment — was built in a single conversation with **Claude Opus 4.6**. From brainstorming the idea to a live production deployment, no manual coding was involved.
-
-The AI:
-1. Researched existing solutions (none fully matched the requirements)
-2. Proposed 3 architectural approaches and recommended the best one
-3. Designed the database schema, API contracts, and security model
-4. Wrote all TypeScript source code
-5. Created the Dockerfile and docker-compose configuration
-6. Pushed to GitHub and deployed to Coolify via API
+This entire project — architecture design, code implementation, Docker setup, Coolify deployment, admin UI with login screen, API docs panel, and persistence debugging — was built in a single conversation with **Claude Opus 4.6**.
 
 ## License
 
