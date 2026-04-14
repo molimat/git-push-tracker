@@ -925,6 +925,177 @@
       gap: 0.5rem;
     }
 
+    /* --- Generic modal --- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 12, 20, 0.8);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      animation: fadeIn 0.15s ease-out;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      width: min(640px, calc(100vw - 2rem));
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 80px -12px rgba(0,0,0,0.6);
+      animation: slideDown 0.2s ease-out;
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      background: rgba(12, 18, 32, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 1;
+    }
+
+    .modal-header h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.25rem;
+    }
+
+    .modal-body pre.md-block {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin: 0;
+      user-select: all;
+    }
+
+    .modal-footer {
+      padding: 0 1.25rem 1.25rem;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+
+    .btn-outline {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
+    .btn-copy-md {
+      padding: 0.5rem 1rem;
+      background: var(--blue);
+      border: none;
+      color: white;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn-copy-md:hover {
+      background: var(--blue-hover);
+    }
+
+    /* --- Log entries in modal --- */
+    .log-entry {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .log-meta {
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .log-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .log-summary {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .log-empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem;
+      font-size: 0.85rem;
+    }
+
+    /* --- Card action buttons --- */
+    .btn-card {
+      padding: 0.35rem 0.7rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-family: var(--font-body);
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .btn-card:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
     /* --- Responsive --- */
     @media (max-width: 640px) {
       .dash-body { padding: 1.25rem; }
@@ -1007,12 +1178,27 @@
       </div>
     </main>
 
+    <!-- Generic modal -->
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <h3 id="modal-title">Modal</h3>
+          <button class="docs-close" onclick="closeModalForce()" title="Close">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-footer" id="modal-footer"></div>
+      </div>
+    </div>
+
     <!-- Docs overlay + slide panel -->
     <div id="docs-overlay" class="docs-overlay" onclick="closeDocs()"></div>
     <div id="docs-panel" class="docs-panel">
       <div class="docs-header">
         <h2>API Documentation</h2>
-        <button class="docs-close" onclick="closeDocs()" title="Close">&times;</button>
+        <div style="display:flex;gap:0.4rem;align-items:center">
+          <button class="btn-copy-md" onclick="copyDocsAsMarkdown()" id="btn-copy-docs">Copy .md</button>
+          <button class="docs-close" onclick="closeDocs()" title="Close">&times;</button>
+        </div>
       </div>
       <div class="docs-content">
 
@@ -1059,7 +1245,7 @@
         <div class="docs-code-block">
           <pre><span class="code-comment"># Fetch AI-generated push summaries for your project</span>
 curl -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
-  <span class="code-string">"https://your-domain.com/api/v1/pushes"</span></pre>
+  <span class="code-string">"DOMAIN_PLACEHOLDER/api/v1/pushes"</span></pre>
         </div>
 
         <div class="docs-callout">
@@ -1118,7 +1304,7 @@ curl -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
 
         <p><strong>JavaScript / Node.js:</strong></p>
         <div class="docs-code-block">
-          <pre><span class="code-key">const</span> res = <span class="code-key">await</span> fetch(<span class="code-string">'https://your-domain.com/api/v1/pushes?limit=5'</span>, {
+          <pre><span class="code-key">const</span> res = <span class="code-key">await</span> fetch(<span class="code-string">'DOMAIN_PLACEHOLDER/api/v1/pushes?limit=5'</span>, {
   headers: { Authorization: <span class="code-string">'Bearer YOUR_API_KEY'</span> }
 });
 <span class="code-key">const</span> { pushes } = <span class="code-key">await</span> res.json();
@@ -1130,7 +1316,7 @@ pushes.forEach(p => console.log(p.summary));</pre>
           <pre><span class="code-key">import</span> requests
 
 res = requests.get(
-    <span class="code-string">"https://your-domain.com/api/v1/pushes"</span>,
+    <span class="code-string">"DOMAIN_PLACEHOLDER/api/v1/pushes"</span>,
     headers={<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>},
     params={<span class="code-string">"branch"</span>: <span class="code-string">"main"</span>, <span class="code-string">"limit"</span>: 10}
 )
@@ -1275,6 +1461,8 @@ res = requests.get(
               <span class="provider-badge ${p.provider}">${p.provider}</span>
             </div>
             <div class="project-actions">
+              <button class="btn-card" onclick="showLogs('${p.id}', '${esc(p.name)}')">Logs</button>
+              <button class="btn-card" onclick="showHowToConnect('${p.id}', '${esc(p.name)}')">How to Connect</button>
               <button class="btn btn-key" onclick="generateKey('${p.id}')">+ Key</button>
               <button class="btn btn-delete" onclick="deleteProject('${p.id}')">Delete</button>
             </div>
@@ -1420,6 +1608,11 @@ res = requests.get(
       return d.innerHTML;
     }
 
+    // ---- Replace domain placeholders ----
+    document.querySelectorAll('#docs-panel pre, #docs-panel .docs-code-block pre').forEach(el => {
+      el.innerHTML = el.innerHTML.replace(/DOMAIN_PLACEHOLDER/g, baseUrl);
+    });
+
     // ---- Docs panel ----
     function openDocs() {
       document.getElementById('docs-overlay').style.display = 'block';
@@ -1433,8 +1626,219 @@ res = requests.get(
       document.body.style.overflow = '';
     }
 
+    function copyDocsAsMarkdown() {
+      const md = `# Git Push Tracker — API Documentation
+
+## How It Works
+
+Git Push Tracker receives push events from GitHub/GitLab via webhooks, generates AI summaries using Google Gemini, and exposes them through a REST API. Each project has its own API key — consumers only see pushes from their project.
+
+## Quick Setup
+
+1. **Create a project** — Add a GitHub/GitLab repo URL in the admin dashboard. You'll get a webhook URL and secret.
+2. **Configure the webhook** — In your repo settings, add a webhook with the URL and secret. Select push events only.
+3. **Generate an API key** — Click "+ Key" on your project card. Save the key — it's only shown once.
+4. **Consume the API** — Make a GET request with your Bearer token.
+
+## API Endpoint
+
+\`\`\`
+GET ${baseUrl}/api/v1/pushes
+Authorization: Bearer YOUR_API_KEY
+\`\`\`
+
+### Query Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| \`limit\` | 20 | Results per page (max 100) |
+| \`offset\` | 0 | Pagination offset |
+| \`branch\` | — | Filter by branch name |
+| \`since\` | — | Filter by date (ISO 8601) |
+
+### Response
+
+\`\`\`json
+{
+  "project": "my-app",
+  "pushes": [
+    {
+      "id": "uuid",
+      "branch": "main",
+      "author": "dev",
+      "commitCount": 3,
+      "summary": "- Added OAuth endpoint\\n- Fixed timeout\\n- Updated deps",
+      "pushedAt": "2026-04-14T10:30:00.000Z"
+    }
+  ],
+  "pagination": { "limit": 20, "offset": 0, "total": 42 }
+}
+\`\`\`
+
+## Examples
+
+### curl
+\`\`\`bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \\
+  "${baseUrl}/api/v1/pushes?limit=5&branch=main"
+\`\`\`
+
+### JavaScript
+\`\`\`js
+const res = await fetch('${baseUrl}/api/v1/pushes?limit=5', {
+  headers: { Authorization: 'Bearer YOUR_API_KEY' }
+});
+const { pushes } = await res.json();
+pushes.forEach(p => console.log(p.summary));
+\`\`\`
+
+### Python
+\`\`\`python
+import requests
+
+res = requests.get(
+    "${baseUrl}/api/v1/pushes",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    params={"branch": "main", "limit": 10}
+)
+for push in res.json()["pushes"]:
+    print(push["summary"])
+\`\`\`
+
+## FAQ
+
+- **Does one endpoint return all projects?** No. Each API key is tied to one project. The Bearer token determines which project's data you see.
+- **Can someone see another project's pushes?** No. API keys are project-scoped. Complete isolation.
+- **How fast are summaries generated?** ~15-20 seconds after a push.
+- **What if Gemini fails?** Failed pushes retry automatically up to 3 times.
+`;
+      navigator.clipboard.writeText(md);
+      const btn = document.getElementById('btn-copy-docs');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy .md'; }, 2000);
+    }
+
+    // ---- Generic modal ----
+    function openModal(title, bodyHtml, footerHtml) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-body').innerHTML = bodyHtml;
+      document.getElementById('modal-footer').innerHTML = footerHtml || '';
+      document.getElementById('modal-overlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(e) {
+      if (e && e.target !== e.currentTarget) return;
+      closeModalForce();
+    }
+
+    function closeModalForce() {
+      document.getElementById('modal-overlay').classList.remove('active');
+      if (!document.getElementById('docs-panel').style.display ||
+          document.getElementById('docs-panel').style.display === 'none') {
+        document.body.style.overflow = '';
+      }
+    }
+
+    // ---- Logs modal ----
+    async function showLogs(projectId, projectName) {
+      openModal(`Logs — ${projectName}`, '<div class="log-empty">Loading...</div>', '');
+
+      const logs = await api(`/api/projects/${projectId}/logs?limit=3`);
+      if (!logs) return;
+
+      if (!logs.length) {
+        document.getElementById('modal-body').innerHTML =
+          '<div class="log-empty">No push summaries yet. Push some code and wait ~15 seconds.</div>';
+        return;
+      }
+
+      const html = logs.map(l => `
+        <div class="log-entry">
+          <div class="log-meta">
+            <span><strong>${esc(l.branch)}</strong></span>
+            <span>${esc(l.author)}</span>
+            <span>${l.commitCount} commit${l.commitCount !== 1 ? 's' : ''}</span>
+            <span>${new Date(l.generatedAt).toLocaleString()}</span>
+          </div>
+          <div class="log-summary">${esc(l.summary)}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('modal-body').innerHTML = html;
+    }
+
+    // ---- How to Connect modal ----
+    function showHowToConnect(projectId, projectName) {
+      const md = `# How to Connect — ${projectName}
+
+## Endpoint
+
+\`\`\`
+GET ${baseUrl}/api/v1/pushes
+Authorization: Bearer YOUR_API_KEY
+\`\`\`
+
+## Webhook URL
+
+\`\`\`
+${baseUrl}/webhooks/github/${projectId}
+${baseUrl}/webhooks/gitlab/${projectId}
+\`\`\`
+
+## curl Example
+
+\`\`\`bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \\
+  "${baseUrl}/api/v1/pushes"
+\`\`\`
+
+## JavaScript
+
+\`\`\`js
+const res = await fetch("${baseUrl}/api/v1/pushes", {
+  headers: { Authorization: "Bearer YOUR_API_KEY" }
+});
+const data = await res.json();
+console.log(data.pushes);
+\`\`\`
+
+## Python
+
+\`\`\`python
+import requests
+res = requests.get(
+    "${baseUrl}/api/v1/pushes",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+print(res.json()["pushes"])
+\`\`\`
+
+---
+> Replace YOUR_API_KEY with the key generated for this project.
+> Each key is scoped to this project only — no cross-project access.
+`;
+
+      const bodyHtml = `<pre class="md-block">${esc(md)}</pre>`;
+      const footerHtml = `
+        <button class="btn-outline" onclick="closeModalForce()">Close</button>
+        <button class="btn-copy-md" onclick="copyMdFromModal(this)">Copy .md</button>
+      `;
+      openModal(`How to Connect — ${projectName}`, bodyHtml, footerHtml);
+    }
+
+    function copyMdFromModal(btn) {
+      const pre = document.querySelector('#modal-body pre.md-block');
+      if (pre) navigator.clipboard.writeText(pre.textContent);
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy .md'; }, 2000);
+    }
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeDocs();
+      if (e.key === 'Escape') {
+        closeModalForce();
+        closeDocs();
+      }
     });
   </script>
 </body>

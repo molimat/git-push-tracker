@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from "express";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -161,6 +161,42 @@ export function createAdminRouter(
       message:
         "Save this key now. It will not be shown again.",
     });
+  });
+
+  // Get recent logs (summaries) for a project
+  router.get("/api/projects/:id/logs", (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const limit = Math.min(parseInt(req.query.limit as string) || 3, 20);
+
+    const project = db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, id))
+      .get();
+
+    if (!project) {
+      res.status(404).json({ error: "project not found" });
+      return;
+    }
+
+    const logs = db
+      .select()
+      .from(pushSummaries)
+      .where(eq(pushSummaries.projectId, id))
+      .orderBy(desc(pushSummaries.generatedAt))
+      .limit(limit)
+      .all();
+
+    res.json(
+      logs.map((l) => ({
+        id: l.id,
+        branch: l.branch,
+        author: l.author,
+        commitCount: l.commitCount,
+        summary: l.summary,
+        generatedAt: new Date(l.generatedAt).toISOString(),
+      }))
+    );
   });
 
   // Revoke API key
