@@ -14,6 +14,7 @@ COPY package*.json ./
 RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY src/admin/ui ./dist/admin/ui
+COPY PROMPT.md ./
 
 RUN mkdir -p /app/data
 EXPOSE 3000

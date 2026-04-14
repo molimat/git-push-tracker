@@ -55,6 +55,15 @@ npm run dev
 
 The admin dashboard will be available at `http://localhost:3000/admin`.
 
+### Running Tests
+
+```bash
+npm test             # Run all tests once
+npm run test:watch   # Run tests in watch mode
+```
+
+Tests use real SQLite databases (temp files) and only mock external APIs (Google Gemini). No additional setup required.
+
 ## Configuration
 
 | Variable | Required | Default | Description |

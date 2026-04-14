@@ -1,5 +1,12 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { NormalizedPush } from "../webhooks/github.js";
+
+function loadPromptTemplate(): string {
+  const promptPath = resolve(process.cwd(), "PROMPT.md");
+  return readFileSync(promptPath, "utf-8");
+}
 
 export function createGeminiClient(apiKey: string, model: string) {
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -16,16 +23,12 @@ export function createGeminiClient(apiKey: string, model: string) {
       })
       .join("\n");
 
-    const prompt = `You received the following commits from a git push:
-
-Repository: ${projectName}
-Branch: ${push.branch}
-Author: ${push.author}
-
-Commits:
-${commitsText}
-
-Generate a concise summary in bullet points (max 5) describing the main changes in this push. Focus on functional impact, not technical details. Write in the same language as the commit messages.`;
+    const template = loadPromptTemplate();
+    const prompt = template
+      .replace("{{projectName}}", projectName)
+      .replace("{{branch}}", push.branch)
+      .replace("{{author}}", push.author)
+      .replace("{{commits}}", commitsText);
 
     const result = await generativeModel.generateContent(prompt);
     const response = result.response;
