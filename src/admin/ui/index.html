@@ -3,7 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Git Push Tracker - Admin</title>
+  <title>Git Push Tracker - AI-Powered Push Summaries</title>
+  <meta name="description" content="Self-hosted service that turns your git pushes into AI-generated team updates. Connects to GitHub/GitLab via webhooks, summarizes changes with Google Gemini.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Git Push Tracker">
+  <meta property="og:description" content="AI-powered push summaries for your team. Self-hosted, per-project isolation, GitHub + GitLab support.">
+  <meta property="og:image" content="/assets/og-image.svg">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Git Push Tracker">
+  <meta name="twitter:description" content="AI-powered push summaries for your team. Self-hosted, per-project isolation, GitHub + GitLab support.">
+  <meta name="twitter:image" content="/assets/og-image.svg">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; padding: 2rem; }
@@ -51,7 +67,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Git Push Tracker</h1>
+    <h1 style="display:flex;align-items:center;gap:0.75rem"><img src="/assets/logo.svg" alt="Git Push Tracker" width="36" height="36" style="border-radius:8px"> Git Push Tracker</h1>
 
     <h2>Add Project</h2>
     <div class="form-row">

@@ -1,4 +1,6 @@
 import express from "express";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadConfig } from "./config.js";
 import { createDb } from "./db/index.js";
 import { createWebhookRouter } from "./webhooks/router.js";
@@ -7,12 +9,17 @@ import { createAdminRouter } from "./admin/router.js";
 import { createGeminiClient } from "./gemini/index.js";
 import { startWorker } from "./worker/index.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const config = loadConfig();
 const { db } = createDb(config.databasePath);
 const gemini = createGeminiClient(config.geminiApiKey, config.geminiModel);
 
 const app = express();
 app.use(express.json());
+
+// Serve static assets (logo, favicon, og-image)
+app.use("/assets", express.static(join(__dirname, "admin", "ui", "assets")));
 
 // Mount routers
 app.use("/webhooks", createWebhookRouter(db));
