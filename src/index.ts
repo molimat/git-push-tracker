@@ -26,6 +26,11 @@ app.use("/webhooks", createWebhookRouter(db));
 app.use("/api/v1", createApiRouter(db));
 app.use("/admin", createAdminRouter(db, config.adminUser, config.adminPass));
 
+// Root redirects to admin
+app.get("/", (_req, res) => {
+  res.redirect("/admin");
+});
+
 // Health check
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", version: "1.0.0" });

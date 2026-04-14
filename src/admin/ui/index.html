@@ -689,6 +689,242 @@
       animation: fadeUp 0.4s ease-out backwards;
     }
 
+    /* --- Docs modal --- */
+    .docs-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 12, 20, 0.8);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .docs-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(680px, 100vw);
+      height: 100vh;
+      background: var(--bg-base);
+      border-left: 1px solid var(--border);
+      z-index: 101;
+      overflow-y: auto;
+      animation: slideIn 0.25s ease-out;
+      display: none;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .docs-header {
+      position: sticky;
+      top: 0;
+      background: rgba(12, 18, 32, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 1;
+    }
+
+    .docs-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .docs-close {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.15s;
+    }
+
+    .docs-close:hover {
+      background: var(--red-dim);
+      border-color: rgba(239, 68, 68, 0.2);
+      color: var(--red);
+    }
+
+    .docs-content {
+      padding: 1.5rem;
+    }
+
+    .docs-content h3 {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 0.65rem;
+      margin-top: 1.75rem;
+    }
+
+    .docs-content h3:first-child {
+      margin-top: 0;
+    }
+
+    .docs-content p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
+    }
+
+    .docs-content strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .docs-content code {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: var(--blue);
+    }
+
+    .docs-code-block {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin: 0.75rem 0;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    .docs-code-block pre {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.65;
+      color: var(--text-primary);
+      white-space: pre;
+      margin: 0;
+    }
+
+    .docs-code-block .code-comment {
+      color: var(--text-muted);
+    }
+
+    .docs-code-block .code-string {
+      color: var(--green);
+    }
+
+    .docs-code-block .code-key {
+      color: var(--blue);
+    }
+
+    .docs-step {
+      display: flex;
+      gap: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .docs-step-num {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(230, 57, 43, 0.25);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-top: 2px;
+    }
+
+    .docs-step-body {
+      flex: 1;
+    }
+
+    .docs-step-body h4 {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.3rem;
+    }
+
+    .docs-step-body p {
+      font-size: 0.82rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .docs-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.5rem 0;
+    }
+
+    .docs-callout {
+      background: rgba(59, 130, 246, 0.06);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      border-left: 3px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      margin: 0.75rem 0;
+    }
+
+    .docs-callout p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .docs-callout strong {
+      color: var(--blue);
+    }
+
+    .btn-docs {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.4rem 0.9rem;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-docs:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: rgba(59, 130, 246, 0.06);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
     /* --- Responsive --- */
     @media (max-width: 640px) {
       .dash-body { padding: 1.25rem; }
@@ -696,6 +932,7 @@
       .add-form select { flex: 1; }
       .project-top { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
       .project-actions { align-self: flex-end; }
+      .docs-panel { width: 100vw; }
     }
   </style>
 </head>
@@ -738,7 +975,10 @@
           <img src="/assets/logo.svg" alt="">
           <span>Git Push Tracker</span>
         </div>
-        <button class="dash-logout" onclick="logout()">Sign Out</button>
+        <div class="header-actions">
+          <button class="btn-docs" onclick="openDocs()">&#9783; API Docs</button>
+          <button class="dash-logout" onclick="logout()">Sign Out</button>
+        </div>
       </div>
     </header>
 
@@ -770,6 +1010,172 @@
         </div>
       </div>
     </main>
+
+    <!-- Docs overlay + slide panel -->
+    <div id="docs-overlay" class="docs-overlay" onclick="closeDocs()"></div>
+    <div id="docs-panel" class="docs-panel">
+      <div class="docs-header">
+        <h2>API Documentation</h2>
+        <button class="docs-close" onclick="closeDocs()" title="Close">&times;</button>
+      </div>
+      <div class="docs-content">
+
+        <h3>How It Works</h3>
+        <p>Git Push Tracker receives push events from GitHub/GitLab via webhooks, generates AI summaries using Google Gemini, and exposes them through a REST API. <strong>Each project has its own API key</strong> — consumers only see pushes from their project.</p>
+
+        <hr class="docs-divider">
+
+        <h3>Quick Setup (4 steps)</h3>
+
+        <div class="docs-step">
+          <div class="docs-step-num">1</div>
+          <div class="docs-step-body">
+            <h4>Create a project</h4>
+            <p>Use the form above. You'll get a <strong>webhook URL</strong> and a <strong>webhook secret</strong>.</p>
+          </div>
+        </div>
+
+        <div class="docs-step">
+          <div class="docs-step-num">2</div>
+          <div class="docs-step-body">
+            <h4>Configure the webhook in your repo</h4>
+            <p><strong>GitHub:</strong> Settings &rarr; Webhooks &rarr; Add webhook. Paste the URL, set secret, content type <code>application/json</code>, select "Just the push event".</p>
+            <p><strong>GitLab:</strong> Settings &rarr; Webhooks &rarr; Add. Paste the URL, set secret token, check "Push events".</p>
+          </div>
+        </div>
+
+        <div class="docs-step">
+          <div class="docs-step-num">3</div>
+          <div class="docs-step-body">
+            <h4>Generate an API key</h4>
+            <p>Click <strong>+ Key</strong> on your project card. Save the key immediately — it's only shown once. Give it a label like "dashboard" or "slack-bot".</p>
+          </div>
+        </div>
+
+        <div class="docs-step">
+          <div class="docs-step-num">4</div>
+          <div class="docs-step-body">
+            <h4>Consume the API</h4>
+            <p>Make a GET request with your API key as a Bearer token:</p>
+          </div>
+        </div>
+
+        <div class="docs-code-block">
+          <pre><span class="code-comment"># Fetch AI-generated push summaries for your project</span>
+curl -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  <span class="code-string">"https://your-domain.com/api/v1/pushes"</span></pre>
+        </div>
+
+        <div class="docs-callout">
+          <p><strong>One key = one project.</strong> Each API key is scoped to a single project. If you have 5 projects, you need 5 different keys. A key from project A will never return data from project B.</p>
+        </div>
+
+        <hr class="docs-divider">
+
+        <h3>API Endpoint</h3>
+
+        <div class="docs-code-block">
+          <pre><span class="code-key">GET</span> /api/v1/pushes</pre>
+        </div>
+
+        <p><strong>Headers:</strong></p>
+        <div class="docs-code-block">
+          <pre>Authorization: Bearer <span class="code-string">gpt_abc123...</span></pre>
+        </div>
+
+        <p><strong>Query parameters</strong> (all optional):</p>
+        <div class="docs-code-block">
+          <pre><span class="code-key">limit</span>=20       <span class="code-comment"># Results per page (default 20, max 100)</span>
+<span class="code-key">offset</span>=0      <span class="code-comment"># Pagination offset</span>
+<span class="code-key">branch</span>=main   <span class="code-comment"># Filter by branch name</span>
+<span class="code-key">since</span>=2024-01-01  <span class="code-comment"># Filter by date (ISO 8601)</span></pre>
+        </div>
+
+        <hr class="docs-divider">
+
+        <h3>Response Format</h3>
+
+        <div class="docs-code-block">
+          <pre>{
+  <span class="code-key">"project"</span>: <span class="code-string">"my-app"</span>,
+  <span class="code-key">"pushes"</span>: [
+    {
+      <span class="code-key">"id"</span>: <span class="code-string">"550e8400-e29b-41d4-..."</span>,
+      <span class="code-key">"branch"</span>: <span class="code-string">"main"</span>,
+      <span class="code-key">"author"</span>: <span class="code-string">"molimat"</span>,
+      <span class="code-key">"commitCount"</span>: 3,
+      <span class="code-key">"summary"</span>: <span class="code-string">"- Added OAuth endpoint\n- Fixed Redis timeout\n- Updated deps"</span>,
+      <span class="code-key">"pushedAt"</span>: <span class="code-string">"2026-04-14T10:30:00.000Z"</span>
+    }
+  ],
+  <span class="code-key">"pagination"</span>: {
+    <span class="code-key">"limit"</span>: 20,
+    <span class="code-key">"offset"</span>: 0,
+    <span class="code-key">"total"</span>: 42
+  }
+}</pre>
+        </div>
+
+        <hr class="docs-divider">
+
+        <h3>Integration Examples</h3>
+
+        <p><strong>JavaScript / Node.js:</strong></p>
+        <div class="docs-code-block">
+          <pre><span class="code-key">const</span> res = <span class="code-key">await</span> fetch(<span class="code-string">'https://your-domain.com/api/v1/pushes?limit=5'</span>, {
+  headers: { Authorization: <span class="code-string">'Bearer YOUR_API_KEY'</span> }
+});
+<span class="code-key">const</span> { pushes } = <span class="code-key">await</span> res.json();
+pushes.forEach(p => console.log(p.summary));</pre>
+        </div>
+
+        <p><strong>Python:</strong></p>
+        <div class="docs-code-block">
+          <pre><span class="code-key">import</span> requests
+
+res = requests.get(
+    <span class="code-string">"https://your-domain.com/api/v1/pushes"</span>,
+    headers={<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>},
+    params={<span class="code-string">"branch"</span>: <span class="code-string">"main"</span>, <span class="code-string">"limit"</span>: 10}
+)
+<span class="code-key">for</span> push <span class="code-key">in</span> res.json()[<span class="code-string">"pushes"</span>]:
+    print(push[<span class="code-string">"summary"</span>])</pre>
+        </div>
+
+        <p><strong>Using with an AI agent (prompt context):</strong></p>
+        <div class="docs-code-block">
+          <pre><span class="code-comment"># Give your AI agent recent project activity as context:</span>
+<span class="code-comment">#</span>
+<span class="code-comment"># "Here are the recent changes pushed to the project:</span>
+<span class="code-comment"># {paste the summaries from the API response}"</span>
+<span class="code-comment">#</span>
+<span class="code-comment"># The AI can then answer questions like:</span>
+<span class="code-comment"># - "What was deployed today?"</span>
+<span class="code-comment"># - "Who worked on auth last week?"</span>
+<span class="code-comment"># - "Summarize this sprint's changes"</span></pre>
+        </div>
+
+        <hr class="docs-divider">
+
+        <h3>FAQ</h3>
+
+        <p><strong>Does one endpoint return all projects?</strong><br>
+        No. Each API key is tied to one project. The endpoint <code>GET /api/v1/pushes</code> is the same for all projects, but the Bearer token determines which project's data you see.</p>
+
+        <p><strong>Can someone see another project's pushes?</strong><br>
+        No. API keys are project-scoped. There is no way to query across projects with a single key.</p>
+
+        <p><strong>How fast are summaries generated?</strong><br>
+        The background worker processes pending pushes every 10 seconds. After a push, you should see the AI summary within ~15-20 seconds.</p>
+
+        <p><strong>What if Gemini fails?</strong><br>
+        Failed pushes retry automatically up to 3 times. Check the "pending" count on your project card — if it stays high, the Gemini API key may be invalid or rate-limited.</p>
+
+        <p><strong>Can I use this with a Slack bot / dashboard widget?</strong><br>
+        Yes. Generate a dedicated API key labeled "slack-bot" or "widget" and call the endpoint from your integration. The response is plain JSON.</p>
+
+      </div>
+    </div>
   </div>
 
   <script>
@@ -975,6 +1381,23 @@
       d.textContent = s;
       return d.innerHTML;
     }
+
+    // ---- Docs panel ----
+    function openDocs() {
+      document.getElementById('docs-overlay').style.display = 'block';
+      document.getElementById('docs-panel').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDocs() {
+      document.getElementById('docs-overlay').style.display = 'none';
+      document.getElementById('docs-panel').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDocs();
+    });
   </script>
 </body>
 </html>
