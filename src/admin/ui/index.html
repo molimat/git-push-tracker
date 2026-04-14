@@ -630,8 +630,8 @@
       font-size: 0.78rem;
     }
 
-    .key-row.revoked {
-      opacity: 0.35;
+    .key-row {
+      gap: 0.5rem;
     }
 
     .key-label {
@@ -1540,15 +1540,15 @@ res = requests.get(
 
           <div class="keys-list">
             ${p.keys.length ? p.keys.map(k => `
-              <div class="key-row ${k.revoked ? 'revoked' : ''}">
-                <span class="key-label">
+              <div class="key-row">
+                <span class="key-label" style="flex:1;min-width:0">
                   <span class="key-icon">&#9919;</span>
                   ${esc(k.label || 'Unnamed key')}
                   <span class="key-date">&middot; ${new Date(k.createdAt).toLocaleDateString()}</span>
                 </span>
-                ${k.revoked
-                  ? '<span class="revoked-tag">revoked</span>'
-                  : `<button class="btn btn-revoke" onclick="revokeKey('${p.id}','${k.id}')">Revoke</button>`}
+                <span class="key-value" style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="${esc(k.key)}" onclick="copyText('${esc(k.key)}', this)">${esc(k.key)}</span>
+                <button class="btn-copy" onclick="copyText('${esc(k.key)}', this)" title="Copy key" style="flex-shrink:0">&#x2398;</button>
+                <button class="btn btn-revoke" onclick="deleteKey('${p.id}','${k.id}')" style="flex-shrink:0">Delete</button>
               </div>
             `).join('') : '<div class="no-keys">No API keys yet</div>'}
           </div>
@@ -1643,8 +1643,8 @@ res = requests.get(
       loadProjects();
     }
 
-    async function revokeKey(projectId, keyId) {
-      if (!confirm('Revoke this key? Consumers using it will lose access.')) return;
+    async function deleteKey(projectId, keyId) {
+      if (!confirm('Delete this key? Consumers using it will lose access.')) return;
       await api(`/api/projects/${projectId}/keys/${keyId}`, { method: 'DELETE' });
       loadProjects();
     }

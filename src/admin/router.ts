@@ -53,9 +53,9 @@ export function createAdminRouter(
         ...p,
         keys: keys.map((k) => ({
           id: k.id,
+          key: k.keyRaw,
           label: k.label,
           createdAt: k.createdAt,
-          revoked: k.revokedAt !== null,
         })),
         stats: { pending: pendingCount, processed: processedCount },
       };
@@ -148,9 +148,9 @@ export function createAdminRouter(
         id: keyId,
         projectId: id,
         keyHash,
+        keyRaw: rawKey,
         label: label || null,
         createdAt: Date.now(),
-        revokedAt: null,
       })
       .run();
 
@@ -158,8 +158,6 @@ export function createAdminRouter(
       id: keyId,
       key: rawKey,
       label: label || null,
-      message:
-        "Save this key now. It will not be shown again.",
     });
   });
 
@@ -199,7 +197,7 @@ export function createAdminRouter(
     );
   });
 
-  // Revoke API key
+  // Delete API key
   router.delete(
     "/api/projects/:projectId/keys/:keyId",
     (req: Request, res: Response) => {
@@ -216,10 +214,7 @@ export function createAdminRouter(
         return;
       }
 
-      db.update(apiKeys)
-        .set({ revokedAt: Date.now() })
-        .where(eq(apiKeys.id, keyId))
-        .run();
+      db.delete(apiKeys).where(eq(apiKeys.id, keyId)).run();
 
       res.status(204).send();
     }

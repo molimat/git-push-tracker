@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Request, Response, NextFunction } from "express";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { AppDb } from "../db/index.js";
 import { apiKeys } from "../db/schema.js";
 
@@ -27,11 +27,11 @@ export function createBearerAuth(db: AppDb) {
     const key = db
       .select()
       .from(apiKeys)
-      .where(and(eq(apiKeys.keyHash, keyHash), isNull(apiKeys.revokedAt)))
+      .where(eq(apiKeys.keyHash, keyHash))
       .get();
 
     if (!key) {
-      res.status(401).json({ error: "invalid or revoked api key" });
+      res.status(401).json({ error: "invalid api key" });
       return;
     }
 

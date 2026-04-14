@@ -26,9 +26,9 @@ export function createDb(databasePath: string) {
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
       key_hash TEXT NOT NULL,
+      key_raw TEXT NOT NULL DEFAULT '',
       label TEXT,
-      created_at INTEGER NOT NULL,
-      revoked_at INTEGER
+      created_at INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS raw_pushes (

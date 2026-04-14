@@ -15,9 +15,9 @@ export const apiKeys = sqliteTable("api_keys", {
     .notNull()
     .references(() => projects.id, { onDelete: "cascade" }),
   keyHash: text("key_hash").notNull(),
+  keyRaw: text("key_raw").notNull(),
   label: text("label"),
   createdAt: integer("created_at").notNull(),
-  revokedAt: integer("revoked_at"),
 });
 
 export const rawPushes = sqliteTable("raw_pushes", {
