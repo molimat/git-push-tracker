@@ -976,6 +976,37 @@
       padding: 1.25rem;
     }
 
+    .modal-body .rendered-docs h3 {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin: 1.25rem 0 0.5rem 0;
+    }
+
+    .modal-body .rendered-docs h3:first-child {
+      margin-top: 0;
+    }
+
+    .modal-body .rendered-docs .docs-code-block {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.85rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .modal-body .rendered-docs .docs-code-block pre {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 0;
+    }
+
     .modal-body pre.md-block {
       font-family: var(--font-mono);
       font-size: 0.78rem;
@@ -1224,7 +1255,8 @@
       <div class="docs-header">
         <h2>API Documentation</h2>
         <div style="display:flex;gap:0.4rem;align-items:center">
-          <button class="btn-copy-md" onclick="copyDocsAsMarkdown()" id="btn-copy-docs">Copy .md</button>
+          <button class="btn-outline" onclick="copyDocsAsText()" id="btn-copy-docs-text" style="font-size:0.72rem;padding:0.3rem 0.7rem">Copy text</button>
+          <button class="btn-copy-md" onclick="copyDocsAsMarkdown()" id="btn-copy-docs" style="font-size:0.72rem;padding:0.3rem 0.7rem">Copy .md</button>
           <button class="docs-close" onclick="closeDocs()" title="Close">&times;</button>
         </div>
       </div>
@@ -1746,6 +1778,14 @@ for push in res.json()["pushes"]:
       setTimeout(() => { btn.textContent = 'Copy .md'; }, 2000);
     }
 
+    function copyDocsAsText() {
+      const el = document.querySelector('#docs-panel .docs-content');
+      if (el) navigator.clipboard.writeText(el.innerText);
+      const btn = document.getElementById('btn-copy-docs-text');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy text'; }, 2000);
+    }
+
     // ---- Generic modal ----
     function openModal(title, bodyHtml, footerHtml) {
       document.getElementById('modal-title').textContent = title;
@@ -1798,7 +1838,8 @@ for push in res.json()["pushes"]:
 
     // ---- How to Connect modal ----
     function showHowToConnect(projectId, projectName) {
-      const md = `# How to Connect — ${projectName}
+      // Store markdown for copy
+      window._htcMarkdown = `# How to Connect — ${projectName}
 
 ## Endpoint
 
@@ -1807,7 +1848,7 @@ GET ${baseUrl}/api/v1/pushes
 Authorization: Bearer YOUR_API_KEY
 \`\`\`
 
-## curl Example
+## curl
 
 \`\`\`bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \\
@@ -1835,24 +1876,61 @@ res = requests.get(
 print(res.json()["pushes"])
 \`\`\`
 
----
 > Replace YOUR_API_KEY with the key generated for this project.
 > Each key is scoped to this project only — no cross-project access.
 `;
 
-      const bodyHtml = `<pre class="md-block">${esc(md)}</pre>`;
+      // Rendered HTML view
+      const bodyHtml = `
+        <div class="rendered-docs">
+          <h3>Endpoint</h3>
+          <div class="docs-code-block"><pre><span class="code-key">GET</span> ${esc(baseUrl)}/api/v1/pushes
+Authorization: Bearer <span class="code-string">YOUR_API_KEY</span></pre></div>
+
+          <h3>curl</h3>
+          <div class="docs-code-block"><pre>curl -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \\
+  <span class="code-string">"${esc(baseUrl)}/api/v1/pushes"</span></pre></div>
+
+          <h3>JavaScript</h3>
+          <div class="docs-code-block"><pre><span class="code-key">const</span> res = <span class="code-key">await</span> fetch(<span class="code-string">"${esc(baseUrl)}/api/v1/pushes"</span>, {
+  headers: { Authorization: <span class="code-string">"Bearer YOUR_API_KEY"</span> }
+});
+<span class="code-key">const</span> data = <span class="code-key">await</span> res.json();
+console.log(data.pushes);</pre></div>
+
+          <h3>Python</h3>
+          <div class="docs-code-block"><pre><span class="code-key">import</span> requests
+res = requests.get(
+    <span class="code-string">"${esc(baseUrl)}/api/v1/pushes"</span>,
+    headers={<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+)
+print(res.json()[<span class="code-string">"pushes"</span>])</pre></div>
+
+          <div class="docs-callout" style="margin-top:1rem">
+            <p>Replace <code>YOUR_API_KEY</code> with the key generated for this project. Each key is scoped to this project only.</p>
+          </div>
+        </div>
+      `;
+
       const footerHtml = `
         <button class="btn-outline" onclick="closeModalForce()">Close</button>
+        <button class="btn-outline" onclick="copyPlainFromModal(this)">Copy text</button>
         <button class="btn-copy-md" onclick="copyMdFromModal(this)">Copy .md</button>
       `;
       openModal(`How to Connect — ${projectName}`, bodyHtml, footerHtml);
     }
 
     function copyMdFromModal(btn) {
-      const pre = document.querySelector('#modal-body pre.md-block');
-      if (pre) navigator.clipboard.writeText(pre.textContent);
+      navigator.clipboard.writeText(window._htcMarkdown || '');
       btn.textContent = 'Copied!';
       setTimeout(() => { btn.textContent = 'Copy .md'; }, 2000);
+    }
+
+    function copyPlainFromModal(btn) {
+      const el = document.querySelector('#modal-body .rendered-docs');
+      if (el) navigator.clipboard.writeText(el.innerText);
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy text'; }, 2000);
     }
 
     document.addEventListener('keydown', (e) => {
