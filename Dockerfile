@@ -15,7 +15,7 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY src/admin/ui ./dist/admin/ui
 
-VOLUME /app/data
+RUN mkdir -p /app/data
 EXPOSE 3000
 
 CMD ["node", "dist/index.js"]
