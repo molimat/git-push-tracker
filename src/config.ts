@@ -22,7 +22,7 @@ export function loadConfig(): Config {
     databasePath: process.env.DATABASE_PATH || "./data/pushlog.db",
     workerIntervalMs: parseInt(process.env.WORKER_INTERVAL_MS || "10000", 10),
     maxRetryAttempts: parseInt(process.env.MAX_RETRY_ATTEMPTS || "3", 10),
-    geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
   };
 }
 
