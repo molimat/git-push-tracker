@@ -1,0 +1,19 @@
+services:
+  git-push-tracker:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS}
+      - DATABASE_PATH=/app/data/pushlog.db
+      - WORKER_INTERVAL_MS=${WORKER_INTERVAL_MS:-10000}
+      - MAX_RETRY_ATTEMPTS=${MAX_RETRY_ATTEMPTS:-3}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+    volumes:
+      - pushlog-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  pushlog-data:

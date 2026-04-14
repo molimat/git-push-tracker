@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Git Push Tracker - Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; padding: 2rem; }
+    h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #f8fafc; }
+    h2 { font-size: 1.1rem; margin-bottom: 0.75rem; color: #94a3b8; }
+
+    .container { max-width: 900px; margin: 0 auto; }
+
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .card-header h3 { font-size: 1rem; color: #f1f5f9; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-github { background: #21262d; color: #f0f6fc; }
+    .badge-gitlab { background: #292961; color: #fc6d26; }
+
+    .stats { display: flex; gap: 1rem; font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem; }
+    .stats span { background: #0f172a; padding: 2px 8px; border-radius: 4px; }
+
+    .webhook-url { font-family: monospace; font-size: 0.8rem; color: #38bdf8; background: #0f172a; padding: 4px 8px; border-radius: 4px; word-break: break-all; display: block; margin-bottom: 0.75rem; }
+
+    .keys-section { margin-top: 0.5rem; }
+    .key-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #0f172a; border-radius: 4px; margin-bottom: 4px; font-size: 0.8rem; }
+    .key-item.revoked { opacity: 0.4; }
+
+    button { cursor: pointer; border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.8rem; font-weight: 500; transition: background 0.15s; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-sm { padding: 3px 8px; font-size: 0.75rem; }
+
+    .form-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .form-row input, .form-row select { flex: 1; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; }
+    .form-row input:focus, .form-row select:focus { outline: none; border-color: #3b82f6; }
+
+    .alert { padding: 10px 14px; border-radius: 6px; margin-bottom: 1rem; font-size: 0.85rem; font-family: monospace; word-break: break-all; }
+    .alert-success { background: #064e3b; border: 1px solid #059669; color: #6ee7b7; }
+    .alert-error { background: #450a0a; border: 1px solid #dc2626; color: #fca5a5; }
+
+    .empty { text-align: center; color: #475569; padding: 2rem; font-size: 0.9rem; }
+
+    #key-alert { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Git Push Tracker</h1>
+
+    <h2>Add Project</h2>
+    <div class="form-row">
+      <input type="text" id="project-name" placeholder="Project name">
+      <select id="project-provider">
+        <option value="github">GitHub</option>
+        <option value="gitlab">GitLab</option>
+      </select>
+      <input type="text" id="project-url" placeholder="Repository URL">
+      <button class="btn-primary" onclick="createProject()">Add</button>
+    </div>
+
+    <div id="key-alert" class="alert alert-success"></div>
+
+    <h2>Projects</h2>
+    <div id="projects-list"><div class="empty">Loading...</div></div>
+  </div>
+
+  <script>
+    const baseUrl = window.location.origin;
+
+    async function api(path, opts = {}) {
+      const res = await fetch(`/admin${path}`, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+      });
+      if (res.status === 204) return null;
+      return res.json();
+    }
+
+    async function loadProjects() {
+      const projects = await api('/api/projects');
+      const el = document.getElementById('projects-list');
+
+      if (!projects.length) {
+        el.innerHTML = '<div class="empty">No projects yet. Add one above.</div>';
+        return;
+      }
+
+      el.innerHTML = projects.map(p => `
+        <div class="card">
+          <div class="card-header">
+            <h3>${esc(p.name)} <span class="badge badge-${p.provider}">${p.provider}</span></h3>
+            <button class="btn-danger btn-sm" onclick="deleteProject('${p.id}')">Delete</button>
+          </div>
+          <span class="webhook-url">${baseUrl}/webhooks/${p.provider}/${p.id}</span>
+          <div class="stats">
+            <span>Pending: ${p.stats.pending}</span>
+            <span>Processed: ${p.stats.processed}</span>
+          </div>
+          <div class="keys-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <strong style="font-size:0.8rem;color:#94a3b8">API Keys</strong>
+              <button class="btn-primary btn-sm" onclick="generateKey('${p.id}')">+ Key</button>
+            </div>
+            ${p.keys.length ? p.keys.map(k => `
+              <div class="key-item ${k.revoked ? 'revoked' : ''}">
+                <span>${esc(k.label || 'no label')} &mdash; ${new Date(k.createdAt).toLocaleDateString()}</span>
+                ${k.revoked ? '<span style="color:#ef4444">revoked</span>' : `<button class="btn-danger btn-sm" onclick="revokeKey('${p.id}','${k.id}')">Revoke</button>`}
+              </div>
+            `).join('') : '<div style="font-size:0.8rem;color:#475569">No keys yet</div>'}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function createProject() {
+      const name = document.getElementById('project-name').value.trim();
+      const provider = document.getElementById('project-provider').value;
+      const repoUrl = document.getElementById('project-url').value.trim();
+      if (!name || !repoUrl) return alert('Name and URL required');
+
+      const result = await api('/api/projects', {
+        method: 'POST',
+        body: JSON.stringify({ name, provider, repoUrl }),
+      });
+
+      showAlert(`Project created! Webhook secret: ${result.webhookSecret}`);
+      document.getElementById('project-name').value = '';
+      document.getElementById('project-url').value = '';
+      loadProjects();
+    }
+
+    async function deleteProject(id) {
+      if (!confirm('Delete this project and all its data?')) return;
+      await api(`/api/projects/${id}`, { method: 'DELETE' });
+      loadProjects();
+    }
+
+    async function generateKey(projectId) {
+      const label = prompt('Key label (optional):') || '';
+      const result = await api(`/api/projects/${projectId}/keys`, {
+        method: 'POST',
+        body: JSON.stringify({ label }),
+      });
+      showAlert(`API Key (save now, shown once): ${result.key}`);
+      loadProjects();
+    }
+
+    async function revokeKey(projectId, keyId) {
+      if (!confirm('Revoke this key?')) return;
+      await api(`/api/projects/${projectId}/keys/${keyId}`, { method: 'DELETE' });
+      loadProjects();
+    }
+
+    function showAlert(msg) {
+      const el = document.getElementById('key-alert');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 30000);
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    loadProjects();
+  </script>
+</body>
+</html>

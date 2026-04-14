@@ -1,0 +1,44 @@
+{
+  "name": "git-push-tracker",
+  "version": "1.0.0",
+  "description": "Self-hosted service that listens to GitHub/GitLab push webhooks, generates AI summaries via Gemini, and exposes per-project REST APIs with isolated bearer tokens.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
+  },
+  "keywords": [
+    "git",
+    "push",
+    "tracker",
+    "webhook",
+    "gemini",
+    "ai",
+    "summary"
+  ],
+  "license": "MIT",
+  "author": "molimat",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "better-sqlite3": "^12.9.0",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "@types/uuid": "^10.0.0",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
+  }
+}
